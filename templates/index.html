@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Media Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..800&family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:        #faf8ff;
+  --surface:   #ffffff;
+  --surface-2: #f4f1ff;
+  --border:    #e8e4f0;
+  --text:      #1a1030;
+  --muted:     #7c6f99;
+  --primary:   #7c3aed;
+  --primary-light: #ede9fe;
+  --green:     #059669;
+  --green-light: #d1fae5;
+  --red:       #dc2626;
+  --red-light: #fee2e2;
+  --amber:     #d97706;
+  --amber-light: #fef3c7;
+  --blue:      #2563eb;
+  --blue-light: #dbeafe;
+  --radius:    16px;
+  --radius-sm: 10px;
+  --shadow-sm: 0 1px 3px rgba(100,60,200,.06), 0 4px 12px rgba(100,60,200,.08);
+  --shadow:    0 2px 8px rgba(100,60,200,.07), 0 8px 24px rgba(100,60,200,.10), 0 20px 48px rgba(100,60,200,.07);
+  --shadow-lg: 0 4px 16px rgba(100,60,200,.10), 0 16px 40px rgba(100,60,200,.14), 0 32px 80px rgba(100,60,200,.10);
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Floating background blobs ── */
+.blobs {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; overflow: hidden;
+}
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0;
+  animation: blobFloat 12s ease-in-out infinite;
+}
+.blob-1 { width: 600px; height: 600px; background: #c4b5fd; top: -150px; left: -100px; animation-delay: 0s; animation-duration: 14s; }
+.blob-2 { width: 500px; height: 500px; background: #fbcfe8; top: 30%; right: -120px; animation-delay: -5s; animation-duration: 18s; }
+.blob-3 { width: 400px; height: 400px; background: #fde68a; bottom: -100px; left: 30%; animation-delay: -9s; animation-duration: 16s; }
+
+@keyframes blobFloat {
+  0%   { opacity: .28; transform: translate(0,0) scale(1); }
+  33%  { opacity: .32; transform: translate(20px,-25px) scale(1.04); }
+  66%  { opacity: .26; transform: translate(-15px,18px) scale(0.97); }
+  100% { opacity: .28; transform: translate(0,0) scale(1); }
+}
+
+/* ── Top nav ── */
+.topnav {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 18px 40px 14px;
+  gap: 12px;
+  box-shadow: 0 1px 0 var(--border), 0 4px 24px rgba(120,80,220,.06);
+}
+.nav-logo {
+  font-family: 'Playfair Display', serif;
+  font-style: normal;
+  font-size: 38px;
+  font-weight: 900;
+  color: var(--primary);
+  letter-spacing: .08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.nav-toggle {
+  display: flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 3px;
+}
+.nav-btn {
+  padding: 7px 28px; border-radius: 9px; border: none;
+  background: transparent; color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+  white-space: nowrap;
+}
+.nav-btn:hover { color: var(--primary); }
+.nav-btn.active {
+  background: var(--surface);
+  color: var(--primary);
+  font-weight: 700;
+  box-shadow: 0 1px 6px rgba(100,60,200,.14), 0 2px 12px rgba(100,60,200,.10);
+  transform: translateY(-1px);
+}
+
+/* ── Main layout ── */
+.main { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 36px 40px; }
+.page { display: none; }
+.page.active { display: block; }
+
+.page-title {
+  font-family: 'Fraunces', serif;
+  font-size: 30px; font-weight: 800;
+  letter-spacing: -.8px; margin-bottom: 28px;
+  color: var(--text);
+  background: linear-gradient(135deg, var(--text), var(--primary));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Stat cards ── */
+.stats {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 18px; margin-bottom: 30px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-sm);
+  transform-style: preserve-3d;
+  transition: transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s ease;
+  cursor: default; position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 60%, rgba(255,255,255,.6));
+  pointer-events: none;
+}
+.stat-card:hover { box-shadow: var(--shadow-lg); }
+.stat-card .accent-dot {
+  position: absolute; top: 16px; right: 16px;
+  width: 8px; height: 8px; border-radius: 50%;
+  animation: pulse 2.5s ease infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: .7; }
+  50%       { transform: scale(1.4); opacity: 1; }
+}
+.dot-purple { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+.dot-green  { background: var(--green);   box-shadow: 0 0 8px var(--green); }
+.dot-amber  { background: var(--amber);   box-shadow: 0 0 8px var(--amber); }
+.dot-blue   { background: var(--blue);    box-shadow: 0 0 8px var(--blue); }
+
+.stat-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--muted); font-weight: 600; margin-bottom: 10px;
+}
+.stat-value {
+  font-family: 'Fraunces', serif;
+  font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1;
+}
+.val-purple { color: var(--primary); }
+.val-green  { color: var(--green); }
+.val-amber  { color: var(--amber); }
+.val-blue   { color: var(--blue); }
+
+/* ── Dashboard grid ── */
+.dash-grid {
+  display: grid; grid-template-columns: 1fr 320px;
+  gap: 20px; align-items: start;
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+.panel-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--muted); font-weight: 700; margin-bottom: 18px;
+}
+
+/* ── Recent list ── */
+.recent-list { display: flex; flex-direction: column; gap: 10px; }
+.recent-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px; cursor: pointer;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+}
+.recent-row:hover {
+  transform: translateX(6px) translateZ(4px);
+  box-shadow: var(--shadow);
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.rr-icon {
+  font-size: 22px; width: 42px; height: 42px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-style: normal;
+}
+.rr-body { flex: 1; min-width: 0; }
+.rr-title { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rr-meta  { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+
+/* ── Charts ── */
+.chart-panel { margin-bottom: 18px; }
+.chart-panel:last-child { margin-bottom: 0; }
+
+/* ── Library filters ── */
+.lib-filters {
+  background: rgba(255,255,255,.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px; margin-bottom: 22px;
+  display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+  box-shadow: var(--shadow-sm);
+}
+.fg { display: flex; flex-direction: column; gap: 5px; }
+.fg label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+
+select, input[type="date"], input[type="text"], input[type="search"] {
+  padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 9px;
+  font-size: 13px; font-family: 'Inter', sans-serif;
+  color: var(--text); background: var(--surface); outline: none;
+  min-width: 110px; transition: all .2s;
+}
+select:focus, input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(124,58,237,.12);
+}
+
+/* ── Cards grid ── */
+.cards-grid {
+  display: grid; grid-template-columns: repeat(2,1fr);
+  gap: 20px;
+}
+
+/* ── Media card ── */
+.media-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: box-shadow .3s ease;
+  will-change: transform;
+}
+.media-card.entering {
+  animation: cardIn .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: perspective(800px) translateY(40px) rotateX(8deg) scale(.97); }
+  to   { opacity: 1; transform: perspective(800px) translateY(0) rotateX(0) scale(1); }
+}
+
+.card-cover {
+  height: 76px; position: relative;
+  display: flex; align-items: center; padding: 0 20px; gap: 14px;
+  overflow: hidden;
+}
+.card-cover::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to right, rgba(0,0,0,.18), rgba(0,0,0,.08));
+  pointer-events: none;
+}
+.card-cover-shimmer {
+  position: absolute; top: -50%; left: -60%;
+  width: 60%; height: 200%;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.22) 50%, transparent 60%);
+  animation: shimmer 3.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes shimmer {
+  0%,100% { left: -60%; }
+  50%      { left: 120%; }
+}
+.card-cover-icon { font-size: 28px; position: relative; z-index: 1; }
+.card-cover-title {
+  font-family: 'Fraunces', serif;
+  font-style: italic; font-size: 17px; font-weight: 700;
+  color: #fff; line-height: 1.25; flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-shadow: 0 2px 8px rgba(0,0,0,.35);
+  position: relative; z-index: 1;
+}
+
+/* Cover gradients per type */
+.cover-book         { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+.cover-movie        { background: linear-gradient(135deg, #be123c, #e11d48); }
+.cover-show         { background: linear-gradient(135deg, #0284c7, #06b6d4); }
+.cover-anime        { background: linear-gradient(135deg, #7e22ce, #db2777); }
+.cover-documentary  { background: linear-gradient(135deg, #047857, #065f46); }
+.cover-podcast      { background: linear-gradient(135deg, #c2410c, #f97316); }
+.cover-game         { background: linear-gradient(135deg, #1d4ed8, #0891b2); }
+.cover-other        { background: linear-gradient(135deg, #6b7280, #4b5563); }
+
+.card-body { padding: 16px 20px 18px; }
+.card-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.card-excerpt {
+  font-size: 13px; color: var(--muted); line-height: 1.6;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  margin-bottom: 14px;
+}
+.card-footer { display: flex; justify-content: space-between; align-items: center; }
+.card-date { font-size: 12px; color: var(--muted); }
+.card-actions { display: flex; gap: 6px; }
+
+/* ── Badges ── */
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; letter-spacing: .03em;
+}
+.badge-book         { background: #ede9fe; color: #5b21b6; }
+.badge-movie        { background: #ffe4e6; color: #9f1239; }
+.badge-show         { background: #e0f2fe; color: #0369a1; }
+.badge-anime        { background: #fae8ff; color: #86198f; }
+.badge-documentary  { background: #dcfce7; color: #166534; }
+.badge-podcast      { background: #ffedd5; color: #9a3412; }
+.badge-game         { background: #dbeafe; color: #1e40af; }
+.badge-other        { background: #f3f4f6; color: #374151; }
+.badge-completed    { background: var(--green-light);  color: var(--green); }
+.badge-inprogress   { background: var(--blue-light);   color: var(--blue); }
+.badge-dropped      { background: var(--red-light);    color: var(--red); }
+.badge-want         { background: var(--amber-light);  color: var(--amber); }
+.badge-onhold       { background: #f3f4f6; color: #6b7280; }
+
+/* ── Stars ── */
+.stars { display: inline-flex; gap: 1px; }
+.star { font-size: 13px; }
+.star.filled { color: var(--amber); }
+.star.empty  { color: #e5e7eb; }
+
+/* ── Star picker ── */
+.star-picker { display: flex; gap: 4px; align-items: center; }
+.sp-star {
+  font-size: 28px; cursor: pointer; color: #e5e7eb;
+  transition: color .1s, transform .15s cubic-bezier(.34,1.56,.64,1);
+  user-select: none; line-height: 1;
+}
+.sp-star.lit  { color: var(--amber); }
+.sp-star:hover { transform: scale(1.25) rotate(-5deg); }
+.rating-lbl { font-size: 12px; color: var(--muted); margin-left: 8px; }
+
+/* ── Buttons ── */
+.btn {
+  padding: 9px 18px; border-radius: 10px; border: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+}
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(1px) scale(.98); }
+.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 14px rgba(124,58,237,.4); }
+.btn-primary:hover { background: #6d28d9; box-shadow: 0 8px 24px rgba(124,58,237,.5); }
+.btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+.btn-ghost:hover { background: var(--surface-2); border-color: var(--primary); color: var(--primary); }
+.btn-danger { background: var(--red-light); color: var(--red); border: 1.5px solid #fecaca; }
+.btn-danger:hover { background: #fecaca; box-shadow: 0 4px 12px rgba(220,38,38,.2); }
+.btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 7px; }
+
+/* ── Modal overlay ── */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(20,10,40,.5);
+  z-index: 50; align-items: center; justify-content: center;
+  backdrop-filter: blur(8px);
+}
+.overlay.open { display: flex; }
+.overlay.open .modal {
+  animation: modalIn .4s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: perspective(800px) translateY(50px) rotateX(6deg) scale(.95); }
+  to   { opacity: 1; transform: perspective(800px) translateY(0) rotateX(0) scale(1); }
+}
+
+.modal {
+  background: rgba(255,255,255,.95);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,.8);
+  border-radius: 20px;
+  padding: 30px 32px;
+  width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 32px 80px rgba(80,40,160,.18), 0 0 0 1px rgba(124,58,237,.08) inset;
+}
+.modal h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 20px; font-weight: 800; margin-bottom: 22px;
+  letter-spacing: -.5px; color: var(--text);
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block; font-size: 12px; font-weight: 600;
+  margin-bottom: 7px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.form-group input, .form-group select { width: 100%; }
+.form-group textarea {
+  width: 100%; padding: 10px 12px;
+  border: 1.5px solid var(--border); border-radius: 9px;
+  font-size: 13px; font-family: 'Inter', sans-serif;
+  resize: vertical; min-height: 80px;
+  color: var(--text); background: var(--surface); outline: none;
+  line-height: 1.65; transition: all .2s;
+}
+.form-group textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(124,58,237,.12);
+}
+.modal-actions {
+  display: flex; gap: 10px; justify-content: flex-end;
+  margin-top: 18px; padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── View / Memory Capsule ── */
+.view-modal { width: 600px; }
+.view-header {
+  display: flex; gap: 18px; align-items: flex-start;
+  margin-bottom: 24px; padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.view-icon {
+  font-size: 34px; width: 64px; height: 64px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; position: relative; overflow: hidden;
+}
+.view-title {
+  font-family: 'Fraunces', serif;
+  font-style: italic; font-size: 24px; font-weight: 800;
+  letter-spacing: -.5px; line-height: 1.2; margin-bottom: 10px; color: var(--text);
+}
+.view-meta { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+.view-date { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+.capsule-section {
+  margin-bottom: 14px; padding: 16px 18px;
+  border-radius: 14px; border-left: 3px solid transparent;
+  transition: transform .2s ease;
+}
+.capsule-section:hover { transform: translateX(4px); }
+.capsule-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+  font-weight: 700; margin-bottom: 10px;
+}
+.capsule-body { font-size: 14px; line-height: 1.78; white-space: pre-wrap; color: var(--text); }
+.cap-liked    { background: var(--green-light); border-left-color: var(--green); }
+.cap-liked    .capsule-label { color: var(--green); }
+.cap-disliked { background: var(--red-light);   border-left-color: var(--red); }
+.cap-disliked .capsule-label { color: var(--red); }
+.cap-notes    { background: var(--primary-light); border-left-color: var(--primary); }
+.cap-notes    .capsule-label { color: var(--primary); }
+
+/* ── Misc ── */
+.empty { text-align: center; padding: 56px; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- Animated background blobs -->
+<div class="blobs" aria-hidden="true">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+
+<header class="topnav">
+  <div class="nav-logo">ARCHIVE</div>
+  <div class="nav-toggle">
+    <button class="nav-btn active" data-page="dashboard">Dashboard</button>
+    <button class="nav-btn" data-page="library">Library</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- Dashboard -->
+  <div id="page-dashboard" class="page active">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px">
+      <div class="page-title" style="margin-bottom:0">Dashboard</div>
+      <button class="btn btn-primary" onclick="openAdd()">+ Add Entry</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card" id="sc-total">
+        <div class="accent-dot dot-blue"></div>
+        <div class="stat-label">Total Logged</div>
+        <div class="stat-value val-blue" id="s-total">0</div>
+      </div>
+      <div class="stat-card" id="sc-completed">
+        <div class="accent-dot dot-green"></div>
+        <div class="stat-label">Completed</div>
+        <div class="stat-value val-green" id="s-completed">0</div>
+      </div>
+      <div class="stat-card" id="sc-avg">
+        <div class="accent-dot dot-amber"></div>
+        <div class="stat-label">Avg Rating</div>
+        <div class="stat-value val-amber" id="s-avg">—</div>
+      </div>
+      <div class="stat-card" id="sc-year">
+        <div class="accent-dot dot-purple"></div>
+        <div class="stat-label">This Year</div>
+        <div class="stat-value val-purple" id="s-year">0</div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="panel">
+        <div class="panel-title">Recently Added</div>
+        <div id="recent-list" class="recent-list"></div>
+        <div id="recent-empty" class="empty" style="display:none;padding:24px">Nothing logged yet. Add your first entry!</div>
+      </div>
+
+      <div>
+        <div class="panel chart-panel">
+          <div class="panel-title">By Type</div>
+          <div style="position:relative;height:200px"><canvas id="type-chart"></canvas></div>
+        </div>
+        <div class="panel chart-panel">
+          <div class="panel-title">Rating Distribution</div>
+          <div style="position:relative;height:150px"><canvas id="rating-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Library -->
+  <div id="page-library" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px">
+      <div class="page-title" style="margin-bottom:0">Library</div>
+      <button class="btn btn-primary" onclick="openAdd()">+ Add Entry</button>
+    </div>
+
+    <div class="lib-filters">
+      <div class="fg">
+        <label>Search</label>
+        <input type="search" id="f-search" placeholder="Title…" oninput="loadLibrary()" style="min-width:180px">
+      </div>
+      <div class="fg">
+        <label>Type</label>
+        <select id="f-type" onchange="loadLibrary()"><option value="">All Types</option></select>
+      </div>
+      <div class="fg">
+        <label>Status</label>
+        <select id="f-status" onchange="loadLibrary()"><option value="">All Statuses</option></select>
+      </div>
+      <div class="fg">
+        <label>Year</label>
+        <select id="f-year" onchange="loadLibrary()"><option value="">All Years</option></select>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="clearFilters()" style="margin-bottom:1px">Clear</button>
+    </div>
+
+    <div id="library-grid" class="cards-grid"></div>
+    <div id="library-empty" class="empty" style="display:none">No entries found.</div>
+  </div>
+
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="overlay" id="modal-entry">
+  <div class="modal">
+    <h2 id="entry-modal-title">Add Entry</h2>
+    <input type="hidden" id="e-id">
+
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="e-title" placeholder="e.g. The Midnight Library">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Type</label>
+        <select id="e-type"></select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="e-status"></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Rating</label>
+      <div style="display:flex;align-items:center">
+        <div class="star-picker" id="star-picker">
+          <span class="sp-star" data-v="1">★</span>
+          <span class="sp-star" data-v="2">★</span>
+          <span class="sp-star" data-v="3">★</span>
+          <span class="sp-star" data-v="4">★</span>
+          <span class="sp-star" data-v="5">★</span>
+        </div>
+        <span class="rating-lbl" id="rating-lbl">Not rated</span>
+      </div>
+      <input type="hidden" id="e-rating">
+    </div>
+    <div class="form-group">
+      <label>Date Completed</label>
+      <input type="date" id="e-date">
+    </div>
+    <div class="form-group">
+      <label>What I Liked</label>
+      <textarea id="e-liked" placeholder="What stood out, what you enjoyed…"></textarea>
+    </div>
+    <div class="form-group">
+      <label>What I Didn't Like</label>
+      <textarea id="e-disliked" placeholder="Criticisms, pacing issues, disappointments…"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Notes & Thoughts</label>
+      <textarea id="e-notes" placeholder="Overall impressions, favourite quotes, context…" style="min-height:100px"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-entry')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEntry()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Memory Capsule Modal -->
+<div class="overlay" id="modal-view">
+  <div class="modal view-modal">
+    <div class="view-header">
+      <div class="view-icon" id="view-icon"></div>
+      <div style="flex:1;min-width:0">
+        <div class="view-title" id="view-title"></div>
+        <div class="view-meta" id="view-badges"></div>
+        <div class="view-date" id="view-date"></div>
+      </div>
+    </div>
+    <div id="sec-liked"    class="capsule-section cap-liked">
+      <div class="capsule-label">What I Liked</div>
+      <div class="capsule-body" id="view-liked"></div>
+    </div>
+    <div id="sec-disliked" class="capsule-section cap-disliked">
+      <div class="capsule-label">What I Didn't Like</div>
+      <div class="capsule-body" id="view-disliked"></div>
+    </div>
+    <div id="sec-notes"    class="capsule-section cap-notes">
+      <div class="capsule-label">Notes & Thoughts</div>
+      <div class="capsule-body" id="view-notes"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" id="view-delete-btn">Delete</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-ghost" id="view-edit-btn">Edit</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-view')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
+<script>
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const today = () => new Date().toISOString().slice(0,10);
+
+const TYPE_ICONS = { Book:'📖', Movie:'🎬', Show:'📺', Anime:'⛩️', Documentary:'🎞️', Podcast:'🎙️', Game:'🎮', Other:'📝' };
+const TYPE_CLS   = { Book:'badge-book', Movie:'badge-movie', Show:'badge-show', Anime:'badge-anime', Documentary:'badge-documentary', Podcast:'badge-podcast', Game:'badge-game', Other:'badge-other' };
+const COVER_CLS  = { Book:'cover-book', Movie:'cover-movie', Show:'cover-show', Anime:'cover-anime', Documentary:'cover-documentary', Podcast:'cover-podcast', Game:'cover-game', Other:'cover-other' };
+const STATUS_CLS = { 'Completed':'badge-completed','Reading':'badge-inprogress','Watching':'badge-inprogress','Dropped':'badge-dropped','Want to Read':'badge-want','Want to Watch':'badge-want','On Hold':'badge-onhold' };
+const ICON_BG    = { Book:'linear-gradient(135deg,#4f46e5,#7c3aed)', Movie:'linear-gradient(135deg,#be123c,#e11d48)', Show:'linear-gradient(135deg,#0284c7,#06b6d4)', Anime:'linear-gradient(135deg,#7e22ce,#db2777)', Documentary:'linear-gradient(135deg,#047857,#065f46)', Podcast:'linear-gradient(135deg,#c2410c,#f97316)', Game:'linear-gradient(135deg,#1d4ed8,#0891b2)', Other:'linear-gradient(135deg,#6b7280,#4b5563)' };
+const RATING_LABELS = ['','Poor','Fair','Good','Great','Excellent'];
+
+let typeChart = null, ratingChart = null;
+let allTypes = [], allStatuses = [];
+let entriesMap = {};
+let pickerRating = 0;
+
+// ── 3D Tilt ───────────────────────────────────────────────────────────────────
+function initTilt(el) {
+  el.addEventListener('mouseenter', () => {
+    el.style.transition = 'box-shadow .3s ease';
+  });
+  el.addEventListener('mousemove', e => {
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width  - 0.5;
+    const y = (e.clientY - r.top)  / r.height - 0.5;
+    el.style.transition = 'transform .08s ease, box-shadow .3s ease';
+    el.style.transform  = `perspective(700px) rotateY(${x*14}deg) rotateX(${y*-14}deg) translateZ(12px) scale(1.01)`;
+    el.style.boxShadow  = 'var(--shadow-lg)';
+  });
+  el.addEventListener('mouseleave', () => {
+    el.style.transition = 'transform .5s cubic-bezier(.34,1.56,.64,1), box-shadow .4s ease';
+    el.style.transform  = '';
+    el.style.boxShadow  = '';
+  });
+}
+
+function initStatTilt(el) {
+  el.addEventListener('mousemove', e => {
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width  - 0.5;
+    const y = (e.clientY - r.top)  / r.height - 0.5;
+    el.style.transition = 'transform .08s ease, box-shadow .2s ease';
+    el.style.transform  = `perspective(500px) rotateY(${x*10}deg) rotateX(${y*-10}deg) translateZ(8px)`;
+    el.style.boxShadow  = 'var(--shadow-lg)';
+  });
+  el.addEventListener('mouseleave', () => {
+    el.style.transition = 'transform .5s cubic-bezier(.34,1.56,.64,1), box-shadow .4s ease';
+    el.style.transform  = '';
+    el.style.boxShadow  = '';
+  });
+}
+
+document.querySelectorAll('.stat-card').forEach(initStatTilt);
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const res = await fetch('/api' + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!res.ok) { const e = await res.text(); throw new Error(e); }
+  return res.json();
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-toggle .nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-toggle .nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const page = btn.dataset.page;
+    document.getElementById('page-' + page).classList.add('active');
+    if (page === 'dashboard') loadDashboard();
+    if (page === 'library')   loadLibrary();
+  });
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function starsHtml(rating, size = 13) {
+  if (!rating) return `<span style="font-size:12px;color:var(--muted)">Not rated</span>`;
+  let h = '<span class="stars">';
+  for (let i = 1; i <= 5; i++)
+    h += `<span class="star ${i <= rating ? 'filled' : 'empty'}" style="font-size:${size}px">★</span>`;
+  return h + '</span>';
+}
+function typeBadge(t)   { return `<span class="badge ${TYPE_CLS[t]   || 'badge-other'}">${esc(t)}</span>`; }
+function statusBadge(s) { return `<span class="badge ${STATUS_CLS[s] || 'badge-onhold'}">${esc(s)}</span>`; }
+
+// Counter animation
+function animateCount(el, target) {
+  if (typeof target !== 'number') return;
+  const start = parseInt(el.textContent) || 0;
+  const dur = 600; const step = 16;
+  const diff = target - start;
+  if (!diff) return;
+  let elapsed = 0;
+  const timer = setInterval(() => {
+    elapsed += step;
+    const progress = Math.min(elapsed / dur, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(start + diff * eased);
+    if (progress === 1) clearInterval(timer);
+  }, step);
+}
+
+// ── Star picker ───────────────────────────────────────────────────────────────
+function setPickerRating(v) {
+  pickerRating = v;
+  document.getElementById('e-rating').value = v || '';
+  document.getElementById('rating-lbl').textContent = v ? `${v} — ${RATING_LABELS[v]}` : 'Not rated';
+  document.querySelectorAll('.sp-star').forEach(s =>
+    s.classList.toggle('lit', parseInt(s.dataset.v) <= v)
+  );
+}
+
+document.querySelectorAll('.sp-star').forEach(star => {
+  star.addEventListener('click', () => {
+    const v = parseInt(star.dataset.v);
+    setPickerRating(pickerRating === v ? 0 : v);
+  });
+  star.addEventListener('mouseenter', () => {
+    const v = parseInt(star.dataset.v);
+    document.querySelectorAll('.sp-star').forEach(s =>
+      s.style.color = parseInt(s.dataset.v) <= v ? 'var(--amber)' : '#e5e7eb'
+    );
+  });
+});
+document.getElementById('star-picker').addEventListener('mouseleave', () => {
+  document.querySelectorAll('.sp-star').forEach(s =>
+    s.style.color = parseInt(s.dataset.v) <= pickerRating ? 'var(--amber)' : '#e5e7eb'
+  );
+});
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const [stats, entries] = await Promise.all([api('/stats'), api('/entries')]);
+  entries.forEach(e => entriesMap[e.id] = e);
+
+  animateCount(document.getElementById('s-total'),     stats.total);
+  animateCount(document.getElementById('s-completed'), stats.completed);
+  animateCount(document.getElementById('s-year'),      stats.this_year);
+  document.getElementById('s-avg').textContent = stats.avg_rating ?? '—';
+
+  const COLORS = ['#7c3aed','#059669','#d97706','#dc2626','#2563eb','#db2777','#0891b2','#65a30d'];
+
+  if (typeChart) typeChart.destroy();
+  const tLabels = Object.keys(stats.by_type);
+  typeChart = tLabels.length
+    ? new Chart(document.getElementById('type-chart'), {
+        type: 'doughnut',
+        data: { labels: tLabels, datasets: [{ data: tLabels.map(k => stats.by_type[k]), backgroundColor: COLORS, borderWidth: 3, borderColor: '#fff' }] },
+        options: { cutout: '62%', maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11, family: 'Inter' } } } } },
+      })
+    : null;
+
+  if (ratingChart) ratingChart.destroy();
+  const rData = ['1','2','3','4','5'].map(k => stats.rating_dist[k] || 0);
+  ratingChart = new Chart(document.getElementById('rating-chart'), {
+    type: 'bar',
+    data: {
+      labels: ['1★','2★','3★','4★','5★'],
+      datasets: [{ data: rData, backgroundColor: ['#fde68a','#fcd34d','#fbbf24','#f59e0b','#d97706'], borderRadius: 6, borderSkipped: false }],
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } },
+        y: { beginAtZero: true, ticks: { precision: 0, font: { family: 'Inter', size: 11 } }, grid: { color: '#f3f4f6' } },
+      },
+    },
+  });
+
+  const recent = entries.slice(0, 6);
+  const list   = document.getElementById('recent-list');
+  if (!recent.length) {
+    list.innerHTML = '';
+    document.getElementById('recent-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('recent-empty').style.display = 'none';
+  list.innerHTML = recent.map((e, i) => `
+    <div class="recent-row" onclick="viewEntry(${e.id})" style="animation:cardIn .4s cubic-bezier(.34,1.56,.64,1) ${i*60}ms both">
+      <div class="rr-icon" style="background:${ICON_BG[e.type] || ICON_BG.Other}">${TYPE_ICONS[e.type] || '📝'}</div>
+      <div class="rr-body">
+        <div class="rr-title">${esc(e.title)}</div>
+        <div class="rr-meta">${typeBadge(e.type)} ${starsHtml(e.rating, 12)}</div>
+      </div>
+      ${statusBadge(e.status)}
+    </div>`).join('');
+}
+
+// ── Library ───────────────────────────────────────────────────────────────────
+async function loadLibrary() {
+  const params = new URLSearchParams();
+  const search = document.getElementById('f-search').value.trim();
+  const type   = document.getElementById('f-type').value;
+  const status = document.getElementById('f-status').value;
+  const year   = document.getElementById('f-year').value;
+  if (search) params.set('search', search);
+  if (type)   params.set('type', type);
+  if (status) params.set('status', status);
+  if (year)   params.set('year', year);
+
+  const entries = await api('/entries?' + params);
+  entries.forEach(e => entriesMap[e.id] = e);
+
+  const grid  = document.getElementById('library-grid');
+  const empty = document.getElementById('library-empty');
+  if (!entries.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  grid.innerHTML = entries.map((e, i) => `
+    <div class="media-card" onclick="viewEntry(${e.id})" style="animation:cardIn .5s cubic-bezier(.34,1.56,.64,1) ${i*50}ms both">
+      <div class="card-cover ${COVER_CLS[e.type] || 'cover-other'}">
+        <div class="card-cover-shimmer"></div>
+        <span class="card-cover-icon">${TYPE_ICONS[e.type] || '📝'}</span>
+        <span class="card-cover-title">${esc(e.title)}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-badges">${typeBadge(e.type)} ${statusBadge(e.status)} ${starsHtml(e.rating)}</div>
+        ${(e.liked || e.notes) ? `<div class="card-excerpt">${esc(e.liked || e.notes)}</div>` : ''}
+        <div class="card-footer">
+          <span class="card-date">${e.date_completed ? esc(e.date_completed) : ''}</span>
+          <div class="card-actions" onclick="event.stopPropagation()">
+            <button class="btn btn-ghost btn-sm" onclick="openEdit(${e.id})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+
+  // Attach 3D tilt to new cards (after DOM update)
+  requestAnimationFrame(() => {
+    grid.querySelectorAll('.media-card').forEach(initTilt);
+  });
+}
+
+async function populateYearFilter() {
+  const entries = await api('/entries');
+  const years = [...new Set(entries.map(e => e.date_completed?.slice(0,4)).filter(Boolean))].sort().reverse();
+  const sel = document.getElementById('f-year');
+  sel.innerHTML = '<option value="">All Years</option>' +
+    years.map(y => `<option value="${esc(y)}">${esc(y)}</option>`).join('');
+}
+
+function clearFilters() {
+  ['f-search','f-type','f-status','f-year'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = el.tagName === 'INPUT' ? '' : '';
+  });
+  loadLibrary();
+}
+
+// ── Memory Capsule ────────────────────────────────────────────────────────────
+function viewEntry(id) {
+  const e = entriesMap[id];
+  if (!e) return;
+  document.getElementById('view-icon').textContent   = TYPE_ICONS[e.type] || '📝';
+  document.getElementById('view-icon').style.background = ICON_BG[e.type] || ICON_BG.Other;
+  document.getElementById('view-title').textContent  = e.title;
+  document.getElementById('view-badges').innerHTML   = typeBadge(e.type) + ' ' + statusBadge(e.status) + ' ' + starsHtml(e.rating, 15);
+  document.getElementById('view-date').textContent   = e.date_completed ? `Completed: ${e.date_completed}` : '';
+  const liked = (e.liked||'').trim(), disliked = (e.disliked||'').trim(), notes = (e.notes||'').trim();
+  document.getElementById('sec-liked').style.display    = liked    ? '' : 'none';
+  document.getElementById('view-liked').textContent     = liked;
+  document.getElementById('sec-disliked').style.display = disliked ? '' : 'none';
+  document.getElementById('view-disliked').textContent  = disliked;
+  document.getElementById('sec-notes').style.display    = notes    ? '' : 'none';
+  document.getElementById('view-notes').textContent     = notes;
+  document.getElementById('view-edit-btn').onclick   = () => { closeModal('modal-view'); openEdit(id); };
+  document.getElementById('view-delete-btn').onclick = () => {
+    if (confirm('Delete this entry?')) { closeModal('modal-view'); deleteEntry(id); }
+  };
+  document.getElementById('modal-view').classList.add('open');
+}
+
+// ── Add / Edit ────────────────────────────────────────────────────────────────
+function openAdd() {
+  document.getElementById('entry-modal-title').textContent = 'Add Entry';
+  document.getElementById('e-id').value = '';
+  document.getElementById('e-title').value = '';
+  document.getElementById('e-type').value = allTypes[0] || '';
+  document.getElementById('e-status').value = 'Completed';
+  document.getElementById('e-date').value = today();
+  document.getElementById('e-liked').value = '';
+  document.getElementById('e-disliked').value = '';
+  document.getElementById('e-notes').value = '';
+  setPickerRating(0);
+  document.getElementById('modal-entry').classList.add('open');
+  setTimeout(() => document.getElementById('e-title').focus(), 80);
+}
+
+function openEdit(id) {
+  const e = entriesMap[id];
+  if (!e) return;
+  document.getElementById('entry-modal-title').textContent = 'Edit Entry';
+  document.getElementById('e-id').value = e.id;
+  document.getElementById('e-title').value = e.title;
+  document.getElementById('e-type').value = e.type;
+  document.getElementById('e-status').value = e.status;
+  document.getElementById('e-date').value = e.date_completed || '';
+  document.getElementById('e-liked').value = e.liked || '';
+  document.getElementById('e-disliked').value = e.disliked || '';
+  document.getElementById('e-notes').value = e.notes || '';
+  setPickerRating(e.rating || 0);
+  document.getElementById('modal-entry').classList.add('open');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+async function saveEntry() {
+  const title = document.getElementById('e-title').value.trim();
+  if (!title) return alert('Please enter a title.');
+  const ratingVal = document.getElementById('e-rating').value;
+  const body = {
+    title, type: document.getElementById('e-type').value,
+    status: document.getElementById('e-status').value,
+    rating: ratingVal ? parseInt(ratingVal) : null,
+    date_completed: document.getElementById('e-date').value || null,
+    liked: document.getElementById('e-liked').value.trim(),
+    disliked: document.getElementById('e-disliked').value.trim(),
+    notes: document.getElementById('e-notes').value.trim(),
+  };
+  const editId = document.getElementById('e-id').value;
+  try {
+    if (editId) await api('/entries/' + editId, { method: 'PUT', body });
+    else        await api('/entries', { method: 'POST', body });
+    closeModal('modal-entry');
+    await refresh();
+    await populateYearFilter();
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteEntry(id) {
+  if (!confirm('Delete this entry?')) return;
+  await api('/entries/' + id, { method: 'DELETE' });
+  delete entriesMap[id];
+  await refresh();
+  await populateYearFilter();
+}
+
+async function refresh() {
+  if (document.getElementById('page-dashboard').classList.contains('active')) await loadDashboard();
+  if (document.getElementById('page-library').classList.contains('active'))   await loadLibrary();
+}
+
+['modal-entry','modal-view'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal(id);
+  });
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async () => {
+  [allTypes, allStatuses] = await Promise.all([api('/types'), api('/statuses')]);
+  allTypes.forEach(t => { document.getElementById('e-type').add(new Option(t,t)); document.getElementById('f-type').add(new Option(t,t)); });
+  allStatuses.forEach(s => { document.getElementById('e-status').add(new Option(s,s)); document.getElementById('f-status').add(new Option(s,s)); });
+  await Promise.all([loadDashboard(), populateYearFilter()]);
+})();
+</script>
+</body>
+</html>
